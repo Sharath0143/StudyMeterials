@@ -1,0 +1,35 @@
+
+
+//To Json Object string format JS
+var values = JSON.stringify({ "StdDetail": JsonObj });
+
+
+//Json string to XML convert
+
+string SalesAreaList = JsonConvert.DeserializeXmlNode(agencyMaster.AgencySalesAreaList.SalesAreaList, "SalesAreaLists").InnerXml;
+
+
+
+
+//Stored Procedure
+
+DECLARE @h int  
+DECLARE @xmldoc VARCHAR(1000)   
+--xmldoc is set with the xml elements which are to be inserted into the table students with FirstName,ID,Technology as table columns  
+  
+SET @xmldoc =  
+'<root>   
+<student FirstName="Ravi" ID="1" Technology="DotNet"></student>   
+<student FirstName="Avdesh" ID="2" Technology="DotNet"></student> </root>'  
+  
+EXEC sp_xml_preparedocument @h OUTPUT, @xmldoc  
+  
+--This sp_xml_preparedocument is internal server SP (pseudo SP). which takes the xmldoc as input and gives an output in @h which contains the data which is to be manipulated further  
+  
+INSERT INTO student   
+SELECT * FROM OpenXML(@h,'/root/student')   
+WITH student   
+EXEC sp_xml_removedocument @h   
+--sp_xml_removedocument free's up the memory.   
+
+
