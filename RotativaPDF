@@ -1,0 +1,32 @@
+var Now_Time = DateTime.Now.ToString("hh:mm:ss tt");
+            string header = Server.MapPath("~/Assets/PdfHeaders/FinalInvoiceBillReportPdfHeader.html");
+            
+            string HeaderFooterSwitches = string.Format("--header-html \"{0}\" " + "--header-spacing \"6\" " + "--footer-center \" © " + "JNI - All rights reserved." + "  " + "  Date: " + DateTime.Now.Date.ToString("dd/MM/yyyy") + "  " + " Time: " + Now_Time + " " + " " + " " + "  Page: [page]/[toPage]\"" + " --footer-line --footer-font-size \"12\" --footer-spacing \"6\" --footer-font-name \"calibri light\"", header);
+
+            //return new ViewAsPdf(getFinalList)
+            var pdfResult = new ViewAsPdf(fibList)
+            {
+                FileName = "patient_invoice_report-pp-gst.pdf",
+                CustomSwitches = HeaderFooterSwitches,
+                PageSize = Rotativa.Options.Size.A4,
+                //PageMargins = { Top = 40, Bottom = 15 } //COMMENTED BY SHARATH ON 09/12/2020
+                PageMargins = { Top = 32, Bottom = 10 }
+            };
+
+
+            Response.Clear();
+            Response.ClearContent();
+            Response.ClearHeaders();
+            //Send the file to the output stream    
+            // var resultSet = pdfResult.BuildPdf(ControllerContext);
+            var resultSet = pdfResult.BuildFile(ControllerContext);
+            Response.Buffer = true;
+            //Set the output stream to the correct content type (PDF).    
+            Response.ContentType = "application/pdf";
+            Response.AddHeader("Accept-Ranges", "bytes");
+            //Output the file    
+            Response.BinaryWrite(resultSet);
+            //Flushing the Response to display the serialized data    
+            Response.End();
+            Response.Flush();
+            return null;
