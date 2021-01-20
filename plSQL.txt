@@ -1,0 +1,23 @@
+SQL> VARIABLE xml VARCHAR2(4000);
+SQL> BEGIN :xml :=
+  2  '<rowset>
+  3       <row>
+  4           <name>tom</name>
+  5           <family>mack</family>
+  6       </row>
+  7       <row>
+  8           <name>marry</name>
+  9           <family>skot</family>
+ 10       </row>
+ 11   </rowset>';
+ 12  END;
+ 13  /
+
+PL/SQL procedure successfully completed
+
+SQL> SELECT x.*
+  2    FROM XMLTable('for $i in /rowset/row return $i'
+  3                    passing XMLTYPE(:xml) columns
+  4                       name VARCHAR2(200) path 'name',
+  5                       family VARCHAR2(200) path 'family'
+  6                  ) x;
