@@ -102,3 +102,10 @@ body, .nav, .menu {
 .nav input:checked ~ span:nth-child(3) {
     transform: translateY(0) rotate(45deg);
 }
+
+
+
+There are many types of navigation bar
+Dock fsh eye
+full screen navbar
+off canvas
