@@ -1,0 +1,36 @@
+public ActionResult SendSMSInCsharp()
+{
+    //we creating the necessary URL string:
+    string _URL = "192.168.1"; //where the SMS Gateway is running
+    string _senderid = "TESTTC";   // here assigning sender id 
+            
+    string _user = HttpUtility.UrlEncode("TestSMS"); // API user name to send SMS
+    string _pass = HttpUtility.UrlEncode("123456");     // API password to send SMS
+    string _recipient = HttpUtility.UrlEncode("9999999999");  // who will receive message
+    string _messageText = HttpUtility.UrlEncode("testing sms..."); // text message
+
+    // Creating URL to send sms
+    string _createURL = _URL + 
+    "username =" + _user +
+       "&pass=" + _pass +
+       "&senderid=" + _senderid +
+       "&dest_mobileno=" + _recipient +
+       "&message=" + _messageText;
+
+    try
+    {
+        // creating web request to send sms 
+        HttpWebRequest _createRequest = (HttpWebRequest)WebRequest.Create(_createURL);
+        // getting response of sms
+        HttpWebResponse myResp = (HttpWebResponse)_createRequest.GetResponse();
+        System.IO.StreamReader _responseStreamReader = new System.IO.StreamReader(myResp.GetResponseStream());
+        string responseString = _responseStreamReader.ReadToEnd();
+        _responseStreamReader.Close();
+        myResp.Close();
+    }
+    catch
+    {
+        //
+    }
+    return View();
+}
