@@ -1,0 +1,16 @@
+ string userId = Convert.ToString(Session["UserId"]);
+            DataTable dt = new DataTable("Grid");
+            dt = _accuRepo.DoctorWiseRport(vDate, userId);
+
+            string[] dates = vDate.Split('/');
+            vDate = string.Join("_", dates);
+            dt.TableName = "Grid"+"_"+vDate;
+            using (XLWorkbook wb = new XLWorkbook())
+            {
+                wb.Worksheets.Add(dt);
+                using (MemoryStream stream = new MemoryStream())
+                {
+                    wb.SaveAs(stream);
+                    return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DoctorWiseReport"+ "_" + vDate+ ".xlsx");
+                }
+            }
