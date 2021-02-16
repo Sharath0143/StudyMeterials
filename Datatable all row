@@ -1,0 +1,4 @@
+ var data = table.rows().data();
+ data.each(function (value, index) {
+     console.log(`For index ${index}, data value is ${value}`);
+ });
