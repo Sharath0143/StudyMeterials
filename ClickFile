@@ -1,0 +1,9 @@
+#fileLoader
+{
+    display:none;
+}
+<input type="file" id="fileLoader" name="files" title="Load File" />
+<input type="button" id="btnOpenFileDialog" value = "Click Me !!!" onclick="openfileDialog();" />
+function openfileDialog() {
+    $("#fileLoader").click();
+}
