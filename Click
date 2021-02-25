@@ -1,0 +1,34 @@
+$('.clickHere').click(function(){ 
+     // this is flat click. this event will be attatched 
+     //to element if element is available in 
+     //dom at the time when JS loaded. 
+
+  // do your stuff
+});
+
+$('.clickHere').on('click', function(){ 
+    // same as first one
+
+    // do your stuff
+})
+
+$(document).on('click', '.clickHere', function(){
+          // this is diffrent type 
+          //  of click. The click will be registered on document when JS 
+          //  loaded and will delegate to the '.clickHere ' element. This is 
+          //  called event delegation 
+   // do your stuff
+});
+
+$('body').on('click', '.clickHere', function(){
+   // This is same as 3rd 
+   // point. Here we used body instead of document/
+
+   // do your stuff
+});
+
+$('.clickHere').off().on('click', function(){ // 
+    // deregister event listener if any and register the event again. This 
+    // prevents the duplicate event resistration on same element. 
+    // do your stuff
+})
