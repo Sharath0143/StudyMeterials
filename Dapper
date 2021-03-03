@@ -1,0 +1,25 @@
+   DynamicParameters ObjParm = new DynamicParameters();  
+          ObjParm.Add("@ComplaintType", Obj.ComplaintType);  
+          ObjParm.Add("@ComplaintDesc", Obj.ComplaintDesc);  
+          ObjParm.Add("@ComplaintId", dbType:DbType.String,direction:ParameterDirection.Output,size:5215585);  
+          connection();  
+          con.Open();  
+          con.Execute("AddComplaint",ObjParm,commandType:CommandType.StoredProcedure);    
+          //Getting the out parameter value of stored procedure   (String)
+          var ComplaintId = ObjParm.Get<string>("@ComplaintId");  
+          con.Close();  
+          return ComplaintId;  
+          
+          
+          DynamicParameters param = new DynamicParameters();
+                param.Add("@YIncentiveCode", YIncentiveCode);
+                param.Add("@Result", dbType: DbType.Int64, direction: ParameterDirection.Output);
+                con.Query("[Delete_YearlyIncentiveSettingsMaster]", param, commandType: CommandType.StoredProcedure);
+                return param.Get<long>("@Result");
+                
+                 public IEnumerable<ReceivedOrder> Get_OrderedProductList(string OrderNumber)
+        {
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@OrderNumber", OrderNumber);
+            return con.Query<ReceivedOrder>("[dbo].[Get_OrderVsProductList]", param, commandType: CommandType.StoredProcedure);
+        }
