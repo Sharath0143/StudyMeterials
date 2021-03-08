@@ -1,0 +1,5 @@
+CREATE TABLE dbo.tblCompany
+  (ID INT IDENTITY(1,1) NOT NULL PRIMARY KEY CLUSTERED,
+   CompanyID AS 'S1501.' + RIGHT('000' + CAST(ID AS VARCHAR(3)), 3) PERSISTED,
+   .... your other columns here....
+  )
