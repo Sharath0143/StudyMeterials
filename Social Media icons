@@ -1,0 +1,60 @@
+ .social-links a {
+        font-size: 18px;
+        display: inline-block;
+        background: #292929;
+        color: #fff;
+        line-height: 1;
+        padding: 8px 0;
+        margin-right: 4px;
+        border-radius: 4px;
+        text-align: center;
+        width: 36px;
+        height: 36px;
+        transition: 0.3s;
+    }
+
+        .social-links a:hover {
+            background: #ffc451;
+            color: #151515;
+            text-decoration: none;
+        }
+
+    .social-links a {
+        font-size: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        line-height: 1;
+        margin-right: 8px;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+    }
+
+    .social-links {
+        margin-top: 40px;
+        display: flex;
+    }
+
+        .social-links a:hover {
+            background: #18d26e;
+        }
+
+    .social-links {
+        margin-top: 15px;
+    }
+    
+    
+    
+    
+    
+    
+    
+     <div class="social-links">
+                    <a href="http://www.twitter.com/" class="twitter"><i class="fa fa-twitter"></i></a>
+                    <a href="#" class="facebook"><i class="fa fa-facebook"></i></a>
+                    <a href="http://www.instagram.com/kutte_10" class="instagram"><i class="fa fa-instagram"></i></a>
+                    <a href="#" class="linkedin"><i class="fa fa-linkedin"></i></a>
+                </div>
