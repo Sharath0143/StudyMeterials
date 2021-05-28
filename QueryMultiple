@@ -1,0 +1,13 @@
+            using (con = new SqlConnection(connectionString))
+            {
+                DynamicParameters param = new DynamicParameters();
+                param.Add("@OrderNumber", orderNumber);               
+                var reader = con.QueryMultiple("[dbo].[GetOrderInvoiceDetails]", param, commandType: CommandType.StoredProcedure);
+                var orderDetailsResult = reader.Read<OrderDetails>().ToList().FirstOrDefault();
+                var productsListResult = reader.Read<ProductDetails>().ToList();
+                OrderInvoice OIDetails = new OrderInvoice();
+                OIDetails.iOrderDetails = orderDetailsResult;
+                OIDetails.iProductDetailsList = productsListResult;
+                return OIDetails;
+
+            }
