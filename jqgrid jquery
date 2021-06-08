@@ -1,0 +1,9 @@
+success: function (result) {
+                $("#jqgrid").jqGrid("clearGridData", true);
+                $("#jqgrid").jqGrid('setGridParam', { data: result });
+                // hide the show message
+                //$("#jqgrid")[0].grid.endReq();
+                // refresh the grid
+                $("#jqgrid").trigger('reloadGrid',[{ page: 1 }]);
+                //var gridData = jQuery("#jqgrid").jqGrid('getRowData');
+                //alert("Alert"+gridData);
