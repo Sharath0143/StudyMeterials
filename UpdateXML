@@ -1,0 +1,11 @@
+UPDATE someTable
+SET someTable.messageAcceptanceCode = XMLdata.messageAcceptanceCode,
+    someTable.messageStatusCode = XMLdata.messageStatusCode
+FROM OPENXML (@hdoc, '/StandardBusinessDocument/documentContent/contentBody/Acknowledgement/messageStatus',3)
+WITH (
+        contentReference VARCHAR(50) '../../../contentHeader/contentReference',
+        messageAcceptanceCode VARCHAR(50) '../messageAcceptanceCode',
+        messageStatusCode VARCHAR(255)
+
+    ) XMLdata
+WHERE someTable.contentReference = XMLdata.contentReference
