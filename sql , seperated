@@ -1,0 +1,20 @@
+-- Create date: <Create Date, ,>
+-- Description:	<Description, ,>
+-- =============================================
+CREATE FUNCTION [dbo].[GetMonthlyTarget] 
+(
+	-- Add the parameters for the function here
+	@MetricsConfigurationId bigint
+)
+RETURNS varchar(1000)
+AS
+BEGIN
+	-- Declare the return variable here
+	DECLARE @Table1 TABLE(Value varchar(100))
+INSERT INTO @Table1(Value) 
+select 
+(select EmpName from UserMaster where EmpCode=oua.AdminId) from operationunitaccess oua where operationunitid=@OperationUnitId and adminId is not null
+return (SELECT STRING_AGG([Value], ', ') AS List_Output
+FROM @Table1)
+
+END
