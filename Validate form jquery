@@ -1,0 +1,5 @@
+$('form').validate();
+
+        if ($('form').valid()){
+        //trigger modal
+        }
