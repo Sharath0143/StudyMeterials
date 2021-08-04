@@ -1,0 +1,26 @@
+$('#Search').click(function () {
+    var IsValid = true;
+    $("#jqgrid").clearGridData();
+
+    $("#jqgrid").jqGrid('setGridParam', { data: JSON.parse($('#JsonData').val()) });
+
+    $("#jqgrid").trigger('reloadGrid');
+    
+    if ($('#Type').val() === "") {
+        $('#EmployeeAlert').show();
+        IsValid = false;
+    }
+
+    if (IsValid) {
+        var test = $('#jqgrid').jqGrid('getGridParam', 'data');
+        var filtered = test.filter(a => a.Type === $('#Type').val());
+
+        console.log(filtered);
+        $("#jqgrid").clearGridData();
+        $("#jqgrid").jqGrid('setGridParam', { data: filtered });
+
+        $("#jqgrid").trigger('reloadGrid');
+
+    }
+
+});
