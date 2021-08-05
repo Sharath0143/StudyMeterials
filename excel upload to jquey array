@@ -1,0 +1,25 @@
+let selectedFile;
+$("#file-upload-excel").on("change", function (e) {
+    selectedFile = e.target.files[0];
+});
+$('#button-upload-excel').on('click', function () {
+    var excelToArray = [];
+    if (selectedFile) {
+        let fileReader = new FileReader();
+        fileReader.readAsBinaryString(selectedFile);
+        fileReader.onload = (event) => {
+            console.log(event.target.result)
+            let data = event.target.result;
+            let Workbook = XLSX.read(data, { type: "binary" });
+            console.log(Workbook);
+            Workbook.SheetNames.forEach(sheet => {
+                let rowObject = XLSX.utils.sheet_to_row_object_array(Workbook.Sheets[sheet]);
+                excelToArray.push({ "MaterialCode": rowObject[0].MaterialCode, "MaterialDescription": rowObject[0].MaterialDescription, "IMSAverage": rowObject[0].IMSAverage })
+            })
+            $("#jqgrid").jqGrid("clearGridData", true);
+            $("#jqgrid").jqGrid('setGridParam', { data: excelToArray });
+            $("#jqgrid").trigger('reloadGrid')
+        };
+
+    }
+})
