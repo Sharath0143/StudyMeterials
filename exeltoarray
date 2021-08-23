@@ -1,0 +1,33 @@
+//---------------ARRAY FROM EXCEL START--------------
+let selectedFile;
+var excelToArray = [];
+$("#file-upload-excel").on("change", function (e) {
+    $("#jqgrid").jqGrid("clearGridData", true);
+    selectedFile = e.target.files[0];
+});
+$('#button-upload-excel').on('click', function () {
+    if (selectedFile) {
+        $('#file-upload-warning').fadeOut();
+        let fileReader = new FileReader();
+        fileReader.readAsBinaryString(selectedFile);
+        fileReader.onload = (event) => {
+            console.log(event.target.result)
+            let data = event.target.result;
+            let Workbook = XLSX.read(data, { type: "binary" });
+            console.log(Workbook);
+            Workbook.SheetNames.forEach(sheet => {
+                let rowObject = XLSX.utils.sheet_to_row_object_array(Workbook.Sheets[sheet]);
+                $(rowObject).each(function (i, data) { 
+                    excelToArray.push({ "MaterialCode": data.MaterialCode, "MaterialDescription": data.MaterialDescription, "IMSAverage": data.IMSAverage })
+                })
+            })
+            $("#jqgrid").jqGrid("clearGridData", true);
+            $("#jqgrid").jqGrid('setGridParam', { data: excelToArray });
+            $("#jqgrid").trigger('reloadGrid')
+        };
+
+    } else {
+        $('#file-upload-warning').text('Please select an excel file').fadeIn();
+    }
+})
+//---------------ARRAY TO EXCEL END--------------
