@@ -1,0 +1,23 @@
+DECLARE @idoc INT
+	EXEC sp_xml_preparedocument @idoc OUTPUT, @XmlString;
+   Drop table IF EXISTS #Temp_1
+
+
+   Create Table #Temp_1(CustomerCode varchar(30),MaterialCode varchar(30),MaterialName varchar(250),PSP varchar(250),PackSize varchar(10),EANCode varchar(30),CustomerMaterialCode varchar(30),
+   OrderQtyInUnits varchar(20), OrderQtyInPallets varchar(20),Remarks varchar(max),Remarks1 
+	varchar(max),Remarks2 varchar(max),Remarks3 varchar(max),Remarks4 varchar(max))
+   INSERT INTO  #Temp_1(CustomerCode,MaterialCode ,MaterialName,PSP,PackSize,EANCode,CustomerMaterialCode ,OrderQtyInUnits,OrderQtyInPallets)
+	SELECT CustomerCode,MaterialCode,MaterialName,PSP,PackSize,EANCode,CustomerMaterialCode,OrderQtyInUnits,OrderQtyInPallets 
+--into #Temp_1
+FROM OpenXML(@idoc,'/ConsignmentOrders/ConsignmentOrders',2) 
+	WITH (
+	CustomerCode varchar(30) 'CustomerCode' ,
+	MaterialCode varchar(30) 'MaterialCode' ,
+	MaterialName Varchar( 250) 'MaterialName',
+	PSP Varchar( 250) 'PSP',
+	PackSize Varchar( 250) 'PackSize',
+	EANCode varchar(30) 'EANCode',
+	CustomerMaterialCode varchar(30) 'CustomerMaterialCode',
+	OrderQtyInUnits NVARCHAR(20) 'OrderQtyInUnits',
+	OrderQtyInPallets NVARCHAR(20) 'OrderQtyInPallets'
+	)
