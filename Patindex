@@ -1,0 +1,1 @@
+PATINDEX('%[^0-9A-Z]%', StockCover)<>0 
