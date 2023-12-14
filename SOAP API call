@@ -1,0 +1,285 @@
+using HRS.BusinessLogicLayer.Integrations;
+using HRS.BusinessObjects.Integrations;
+using HRS.Domain;
+using HRS.Domain.MSP;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
+using System.Xml.Serialization;
+
+namespace OBECancellation.EndDate
+{
+	class Program
+	{
+		/// <summary>
+		/// Main function 
+		/// </summary>
+		/// <param name="args"></param>
+		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+		private static readonly string LogPath=ConfigurationManager.AppSettings["LogPath"].ToString();
+		private static IEnterpriseClientManager _entClientMgr;
+		public static IEnterpriseClientManager EntClientMgr
+		{
+			private get
+			{
+				return _entClientMgr ?? (_entClientMgr = new EnterpriseClientManager());
+			}
+			set
+			{
+				_entClientMgr = value;
+			}
+		}
+		static void Main(string[] args)
+		{
+			LogWrite("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+			GetClientDetailsAsync();
+			LogWrite("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+
+			Console.ReadKey();
+		}
+		/// <summary>
+		/// To get the client information. such as CEID, start date, end date etc
+		/// </summary>
+		/// <param name="clientSignupId"></param>
+		public static async Task GetClientDetailsAsync()
+		{
+			try
+			{
+				string[] lines = File.ReadAllLines(ConfigurationManager.AppSettings["FilePath"].ToString(), Encoding.UTF8);
+				Console.WriteLine("line");
+				if (lines.Count() > 0)
+				{
+					foreach(string payrollNumber in lines)
+					{
+						LogWrite(DateTime.Now.ToLongTimeString());
+						var MspAcctNo=GetMspAcctNumber(payrollNumber);
+						Console.WriteLine("PN "+ payrollNumber);
+						//ClientDisplayValues entCltDisplayVals = EntClientMgr.GetEntClientDisplayValuesUsingAppAccountName(MspAcctNo.ToString(), "MSP");
+						//var entCltDisplayVals = PaychexBLL.GetPaychexEnterpriseClientDisplayValuesOnly("008WQ28JLM97Z8ZP8LLT");
+						if (MspAcctNo != string.Empty)
+						{
+							string endpoint = ConfigurationManager.AppSettings["EndPoint"].ToString();
+							var httpClientHandler = new HttpClientHandler()
+							{
+								Credentials = new NetworkCredential("schaliya", "PerfectlyUnperfect"),
+							};
+							var _client = new HttpClient(httpClientHandler);
+							var requestBodyString = $"<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:uc=\"http://services.paychex.com/payx/uc_1\" xmlns:cli=\"http://schemas.paychex.com/es/client/ClientAcctRegisterMsg_1_0\"><soapenv:Header xmlns=\"http://schemas.paychex.com/es/client/ClientAcctRegisterMsg_1_0\"><AuthenticationHeader><UserName>"+ ConfigurationManager.AppSettings["UserName"].ToString().Trim() + "</UserName><Password>"+ ConfigurationManager.AppSettings["Password"].ToString().Trim() +"</Password></AuthenticationHeader></soapenv:Header><soapenv:Body><uc:getClientCAcct><uc:clientCAcctGetReq><cli:ceid xsi:nil=\"true\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/><cli:appName>MSP</cli:appName><cli:appAcctName>" + MspAcctNo + "</cli:appAcctName><cli:getCAIDOnly>false</cli:getCAIDOnly><cli:getClientDisplayValues>false</cli:getClientDisplayValues><cli:getRelatedAccts>true</cli:getRelatedAccts><cli:getRelatedAcctsWithNoPrimaries>false</cli:getRelatedAcctsWithNoPrimaries></uc:clientCAcctGetReq></uc:getClientCAcct></soapenv:Body></soapenv:Envelope>";
+							var request = new HttpRequestMessage
+							{
+								Content = new StringContent(requestBodyString, Encoding.UTF8, "text/xml"),
+								Method = HttpMethod.Post,
+								RequestUri = new Uri(endpoint)
+							};
+							var result = await _client.SendAsync(request);
+							var content = result.Content.ReadAsStringAsync().Result;
+							if (content != "")
+							{
+								var clientInfo = GetClientInfo(content);
+								if (clientInfo != null)
+								{
+									DateTime endDate = DateTime.Parse(clientInfo.AppAcctEndDt);
+									clientInfo.AppAcctEndDt = DateTime.Parse(ConfigurationManager.AppSettings["EndDate"].ToString()).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK");
+									requestBodyString = $"<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:uc=\"http://services.paychex.com/payx/uc_1\" xmlns:cli=\"http://schemas.paychex.com/es/client/ClientAcctRegisterMsg_1_0\" xmlns:cli1=\"http://schemas.paychex.com/es/client/ClientAppAcct_1_0\" xmlns:ent=\"http://schemas.paychex.com/es/client/EntAppRouting_1_0\" xmlns:ent1=\"http://schemas.paychex.com/es/client/EntRequestor_1_0\"><soapenv:Header/><soapenv:Body><uc:modClientAccount><uc:acctModReq><cli:clientAppAcct><cli1:CEID>" + clientInfo.CEID + "</cli1:CEID><cli1:AppName>MSP</cli1:AppName><cli1:AppAcctName>" + MspAcctNo + "</cli1:AppAcctName><cli1:AppRtgInfo><ent:AppAcctRtngName>" + MspAcctNo + "</ent:AppAcctRtngName><ent:AppAcctRtngValue>" + MspAcctNo + "</ent:AppAcctRtngValue></cli1:AppRtgInfo><cli1:AppAcctStartDt>" + clientInfo.AppAcctStartDt + "</cli1:AppAcctStartDt><cli1:AppAcctEndDt>" + clientInfo.AppAcctEndDt + "</cli1:AppAcctEndDt><cli1:parent>false</cli1:parent><cli1:displayName>?</cli1:displayName></cli:clientAppAcct><cli:modRequestor><ent1:RequestingApp>soapui</ent1:RequestingApp><ent1:RequestingUser>ssdeshku</ent1:RequestingUser><ent1:RequestingAppSubProcess>ENT</ent1:RequestingAppSubProcess></cli:modRequestor></uc:acctModReq></uc:modClientAccount></soapenv:Body></soapenv:Envelope>";
+									request = new HttpRequestMessage
+									{
+										Content = new StringContent(requestBodyString, Encoding.UTF8, "text/xml"),
+										Method = HttpMethod.Post,
+										RequestUri = new Uri(endpoint)
+									};
+									result = await _client.SendAsync(request);
+									content = result.Content.ReadAsStringAsync().Result;
+									LogWrite("STATUS : SUCCESS\nPayrollNumber : " + payrollNumber + "\nCEID : " + clientInfo.CEID + "\nStartDate :" + clientInfo.AppAcctStartDt + "\nEndDate : " + clientInfo.AppAcctEndDt + "\n\n");
+									Console.WriteLine("success");
+								}
+								else
+								{
+									LogWrite("ClientInfo not found (Could be already end dated) MSPAcctNumber : " + MspAcctNo + " PayrollNumber : " + payrollNumber + "\n\n");
+									Console.WriteLine("ClientInfo not found ");
+								}
+							}
+							else
+							{
+								Console.WriteLine(result.ToString());
+							}
+						}
+						else
+						{
+							LogWrite(DateTime.Now.ToLongTimeString());
+							LogWrite("MSPAcctNo not found! (Check in paychexlegalclients) PayrollNumber : " +payrollNumber);
+							Console.WriteLine("MSPAcctNo not found!");
+						}
+					}
+
+				}
+				else
+				{
+					LogWrite(DateTime.Now.ToLongTimeString());
+					LogWrite("The File is empty!");
+				}
+
+			}
+			catch (Exception ex)
+			{
+				LogWrite(DateTime.Now.ToLongTimeString());
+				LogWrite("Exception : "+ex.Message);
+				Console.WriteLine("Exception : " + ex.Message);
+			}
+		}
+		public static clientCAppAcct GetClientInfo(string content)
+		{
+			XmlDocument xmlDocument = new XmlDocument();
+			xmlDocument.LoadXml(content);
+			XDocument doc = XDocument.Parse(content);
+			XNamespace ns = "http://schemas.paychex.com/es/client/ClientAcctRegisterMsg_1_0";
+			XNamespace ns1 = "http://schemas.paychex.com/es/client/ClientAppAcct_1_0";
+			XElement response = doc.Descendants(ns + "clientCAppAcct").FirstOrDefault();
+			if (response != null)
+			{
+				clientCAppAcct ClientCAppAcct = new clientCAppAcct
+				{
+					CEID = (string)response.Element(ns1 + "CEID"),
+					AppAcctStartDt = (string)response.Element(ns1 + "AppAcctStartDt"),
+					AppAcctEndDt = (string)response.Element(ns1 + "AppAcctEndDt")
+				};
+				return ClientCAppAcct;
+			}
+			else
+			{
+				//log response is null. could be end dated. content save 
+				return null;
+			}
+			#region use if it loop
+			//IEnumerable<XElement> responses = doc.Descendants(ns + "clientCAppAcct"); use it response
+			//foreach (XElement response in responses)
+			//{
+			//	ClientCAppAcct = new clientCAppAcct
+			//	{
+			//		CEID = (string)response.Element(ns1 + "CEID"),
+			//		AppAcctStartDt = (string)response.Element(ns1 + "AppAcctStartDt"),
+			//		AppAcctEndDt = (string)response.Element(ns1 + "AppAcctEndDt")
+			//	};
+			//}
+			#endregion
+			
+		}
+		public static string GetMspAcctNumber(string payrollNumber)
+		{
+			try
+			{
+				string ConnectionString = @"data source=mspdbwn2aw11.paychex.com\\MSPDB,1433; database=HRS;integrated security=False;User ID=MSP_RWUD;Password=BGSU_Orange@ndBrown!%;TimeOut=6000";
+				using (SqlConnection connection = new SqlConnection(ConnectionString))
+				{
+					//Create the Command Object
+					SqlCommand cmd = new SqlCommand()
+					{
+						CommandText = "OBECancellation_GetAppAccountNameFromPayroll",
+						Connection = connection,
+						CommandType = CommandType.StoredProcedure
+					};
+					#region input parameter phase 1
+					////Set Input Parameter
+					//SqlParameter param1 = new SqlParameter
+					//{
+					//	ParameterName = "@Name", //Parameter name defined in stored procedure
+					//	SqlDbType = SqlDbType.NVarChar, //Data Type of Parameter
+					//	Value = "Test", //Set the value
+					//	Direction = ParameterDirection.Input //Specify the parameter as input
+					//};
+					////Add the parameter to the SqlCommand object
+					//cmd.Parameters.Add(param1);
+					#endregion
+					#region input parameter phase 2
+					//Another approach to add Input Parameter
+					cmd.Parameters.AddWithValue("@PayrollNumber", payrollNumber);
+					//cmd.Parameters.AddWithValue("@Mobile", "1234567890");
+					#endregion
+					#region output parameter
+					////Set Output Parameter
+					SqlParameter outParameter = new SqlParameter
+					{
+						ParameterName = "@MspAcctName", //Parameter name defined in stored procedure
+						SqlDbType = SqlDbType.VarChar, //Data Type of Parameter
+						Size = 50, //Data Type of Parameter
+						Direction = ParameterDirection.Output //Specify the parameter as ouput
+															  //No need to specify the value property
+					};
+					////Add the parameter to the Parameters collection property of SqlCommand object
+					cmd.Parameters.Add(outParameter);
+					#endregion
+					connection.Open();
+					cmd.ExecuteNonQuery();
+					return outParameter.Value.ToString();
+					//SqlDataReader sdr = cmd.ExecuteReader();
+					#region Loop read
+					//while (sdr.Read())
+					//{
+					//	//Accessing the data using the string key as index
+					//	//Console.WriteLine(sdr["Id"] + ",  " + sdr["Name"] + ",  " + sdr["Email"] + ",  " + sdr["Mobile"]);
+					//	//Accessing the data using the integer index position as key
+					//	//Console.WriteLine(sdr[0] + ",  " + sdr[1] + ",  " + sdr[2] + ",  " + sdr[3]);
+
+					//}
+					return "";
+					#endregion
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Exception Occurred: {ex.Message}");
+				return string.Empty;
+			}
+		}
+		public static void LogWrite(string logMessage)
+		{
+			try
+			{
+				using (StreamWriter w = File.AppendText(LogPath + "\\" + "log_"+DateTime.Today.ToString("dd_MM_yyyy")+".txt"))
+				{
+					Log(logMessage, w);
+				}
+			}
+			catch (Exception ex)
+			{
+			}
+		}
+
+		public static void Log(string logMessage, TextWriter txtWriter)
+		{
+			try
+			{
+				txtWriter.WriteLine("{0}", logMessage);
+				//txtWriter.Write("\r\nLog Entry : ");
+				//txtWriter.WriteLine("{0} {1}", DateTime.Now.ToLongTimeString(),
+				//	DateTime.Now.ToLongDateString());
+				//txtWriter.WriteLine("  :{0}", logMessage);
+				//txtWriter.WriteLine("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+			}
+			catch (Exception ex)
+			{
+			}
+		}
+	}
+	#region Classes
+	[XmlRoot(ElementName = "ns17:clientCAppAcct")]
+	public class clientCAppAcct
+	{
+		[XmlElement(ElementName = "ns3:CEID")]
+		public string CEID { get; set; }
+		public string AppAcctStartDt { get; set; }
+		public string AppAcctEndDt { get; set; }
+	}
+	#endregion,
+}
